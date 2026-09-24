@@ -77,6 +77,32 @@ npm run build && npm run preview   # http://127.0.0.1:4173
 Siehe [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) für Hosting-Optionen und einen optionalen Passwortschutz, falls
 die Seiten öffentlich (nicht nur im eigenen LAN/VPN) erreichbar sein sollen.
 
+## Schritt 6 – Live-Daten statt Snapshot (das eigentliche Ziel, nicht optional in dem Sinne dass es übersprungen werden sollte)
+
+Ein statischer Snapshot ist der schnelle erste Erfolg – das **eigentliche Ziel** ist ein echtes Live-Dashboard,
+das sich selbst aktuell hält. Der komplette Bauplan dafür (Architektur, Sicherheit, ein Collector-Grundgerüst)
+steht in [`docs/LIVE_DATA.md`](docs/LIVE_DATA.md) – lies das Dokument vollständig, bevor du hier anfängst.
+
+Kurzfassung des Ablaufs:
+
+1. Netzatlas kann Live-Daten bereits **ohne Codeänderung** anzeigen: `window.NETZATLAS_LIVE_URL` auf deinen
+   Collector-Endpunkt setzen (ein `<script>`-Tag vor `data.js`, siehe `docs/LIVE_DATA.md`). Das Polling, der
+   Re-Render und die „Live-Verbindung unterbrochen“-Anzeige bei Ausfall sind schon eingebaut und getestet.
+2. Baue einen kleinen, dauerhaft laufenden Collector-Dienst, der deine Proxmox-/Hypervisor-API und deine
+   Monitoring-API **nur lesend** abfragt und daraus das `LIVE`-Objekt zusammensetzt (exaktes Format:
+   `docs/DATA_MODEL.md`). Ein Grundgerüst dafür steht in `docs/LIVE_DATA.md` – das ist bewusst kein fertiges
+   Produkt, weil das an deiner konkreten Infrastruktur hängt.
+3. Für Night City: dieselbe Collector-Quelle anzapfen und die betroffenen Anzeigen (Fensterlicht/Meter, siehe
+   `model.nodeLive()`/`model.guestLive()`) gezielt aktualisieren, statt die ganze Stadt bei jedem Poll neu zu
+   bauen. Das ist der Teil mit dem meisten echten Entwicklungsaufwand.
+4. **Bevor du das als fertig meldest**: geh die komplette Checkliste „Definition of Done“ am Ende von
+   `docs/LIVE_DATA.md` durch, Punkt für Punkt. Ein Dashboard, das beim ersten Netzwerk-Hänger falsche Werte
+   zeigt oder abstürzt, ist nicht fertig, auch wenn es im Normalfall gut aussieht.
+
+Wenn dir für Schritt 2 (Hypervisor-/Monitoring-API-Details, Zugangsdaten, Netzwerk-Erreichbarkeit) etwas fehlt:
+aktiv nachfragen, nicht raten oder mit Platzhalter-Werten weitermachen, die dann unbemerkt im Live-Betrieb
+landen.
+
 ## Nicht vergessen
 
 - Keine echten Zugangsdaten, API-Tokens oder Passwörter in `data.js` oder sonst irgendwo im Repo – dafür gibt

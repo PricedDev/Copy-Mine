@@ -38,6 +38,7 @@ netzatlas/data.js  ←── einzige Datenquelle für beide Projekte
 
 - Schema und Beispiele: [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
 - Deployment-Hinweise: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+- Vom statischen Snapshot zum echten Live-Dashboard: [`docs/LIVE_DATA.md`](docs/LIVE_DATA.md)
 - Für dein Claude, das dies für deine eigene Infrastruktur umbauen soll: [`CLAUDE.md`](CLAUDE.md)
 
 ## Mit eigenen Daten befüllen
@@ -48,6 +49,9 @@ netzatlas/data.js  ←── einzige Datenquelle für beide Projekte
 3. Night City neu bauen (`npm run build` in `nightcity/`) und ein paar Stellen im Code an deine eigenen
    Proxmox-Node-IDs anpassen (siehe `nightcity/README.md`, Abschnitt „Was du zwingend anpassen musst“) – das
    ist eine überschaubare, mechanische Aufgabe für dein Claude, kein Rewrite.
+4. Optional, aber das eigentliche Ziel: `data.js` durch echte, sich selbst aktualisierende Werte ersetzen statt
+   von Hand zu pflegen – Bauplan und Checkliste dafür in [`docs/LIVE_DATA.md`](docs/LIVE_DATA.md). Netzatlas
+   kann Live-Daten bereits ohne Codeänderung anzeigen (`window.NETZATLAS_LIVE_URL` setzen).
 
 ## Lizenz / Nutzung
 

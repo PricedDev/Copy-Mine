@@ -39,3 +39,15 @@ Ausfall-Simulation, ganz ohne Codeänderung. Details dazu als Kommentar am Kopf 
 andere (Gäste, Software, Clients, Cloud-Dienste, IPs, Befunde) ist ohnehin frei.
 
 [Night City](../nightcity) liest dieselbe `data.js` – aktualisierst du hier, baust du dort einfach neu.
+
+## Live-Daten statt Snapshot
+
+`LIVE` in `data.js` ist standardmäßig ein fester Snapshot. Die Seite kann ihn aber auch selbstständig aktuell
+halten: vor `<script src="data.js">` ein `<script>window.NETZATLAS_LIVE_URL = '/live.json';</script>` einfügen
+– dann pollt die Seite diesen Endpunkt (Standard: alle 10 s, einstellbar über `window.NETZATLAS_LIVE_POLL_MS`),
+merged die Antwort in `LIVE` und rendert Schaltplan + Graph neu. Bricht die Verbindung ab, bleibt der letzte
+bekannte Stand sichtbar, mit Hinweis „Live-Verbindung unterbrochen“ statt Absturz oder falschen Nullen. Ohne
+gesetzte `NETZATLAS_LIVE_URL` ändert sich nichts – reiner Snapshot-Betrieb wie bisher.
+
+Was diesen Endpunkt liefern muss und wie du ihn baust (Collector-Grundgerüst, Sicherheit, Checkliste):
+[`../docs/LIVE_DATA.md`](../docs/LIVE_DATA.md).

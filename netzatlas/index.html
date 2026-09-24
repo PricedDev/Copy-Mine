@@ -272,7 +272,7 @@ td a{color:var(--accent);cursor:pointer;font-weight:600}
   <header class="top">
     <div class="brand">
       <h1>Homelab-Netzatlas</h1>
-      <p>Beispiel-Homelab · Datenmodell siehe docs/DATA_MODEL.md · ersetze data.js durch dein eigenes Inventar</p>
+      <p id="brand-sub">Beispiel-Homelab · Datenmodell siehe docs/DATA_MODEL.md · ersetze data.js durch dein eigenes Inventar</p>
     </div>
     <div class="stats" id="stats"></div>
   </header>
@@ -355,6 +355,51 @@ td a{color:var(--accent);cursor:pointer;font-weight:600}
 <script src="data.js"></script>
 <script>
 /* NODES/EDGES/FINDINGS/IPS/TSNET/LIVE kommen aus data.js (siehe docs/DATA_MODEL.md). Kante s → t: s nutzt/braucht t. h:1 = hart, h:0 = weich */
+
+/* ===================== LIVE-DATEN (optional) =====================
+ * Standardmäßig aus: LIVE bleibt der feste Snapshot aus data.js.
+ * Zum Aktivieren vor diesem <script>-Tag in index.html setzen:
+ *   <script>window.NETZATLAS_LIVE_URL = '/live.json';</script>
+ * Erwartete Antwort: JSON mit genau der Form von LIVE aus data.js
+ * ({ at, node: {...}, guest: {...} }), siehe docs/LIVE_DATA.md für den
+ * kompletten Bauplan (Collector, Sicherheit, Definition of Done). */
+const LIVE_URL = (typeof window !== 'undefined' && window.NETZATLAS_LIVE_URL) || null;
+const LIVE_POLL_MS = (typeof window !== 'undefined' && window.NETZATLAS_LIVE_POLL_MS) || 10000;
+let liveStale = false;
+
+function setLiveBadge() {
+  const el = $('#brand-sub');
+  if (!el) return;
+  if (!LIVE_URL) return; // Snapshot-Modus: Text aus index.html unverändert lassen
+  el.textContent = liveStale
+    ? 'Live-Verbindung unterbrochen – letzter bekannter Stand wird weiter angezeigt'
+    : `Live · Stand ${LIVE.at || '–'}`; // textContent escaped bereits automatisch, kein esc() nötig
+}
+
+async function pollLive() {
+  if (!LIVE_URL) return;
+  try {
+    const res = await fetch(LIVE_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data || typeof data !== 'object' || !data.node || !data.guest) throw new Error('unerwartetes Format');
+    Object.assign(LIVE, data);
+    liveStale = false;
+    renderPlan();   // baut #plan neu auf; der Klick-Handler aus bindPlan() bleibt gültig (Event-Delegation auf #plan selbst)
+    refresh();      // Auswahl/Hervorhebung/Linien/Graph auf den neuen Elementen wiederherstellen
+    if (cy) gRebuild(false);
+  } catch (e) {
+    liveStale = true; // letzten bekannten Stand weiter anzeigen, nicht abstürzen
+  }
+  setLiveBadge();
+}
+
+function startLive() {
+  if (!LIVE_URL) return;
+  pollLive();
+  setInterval(pollLive, LIVE_POLL_MS);
+}
+
 /* ===================== VOKABULAR ===================== */
 const LAYERS = {
   flow: { name: 'Daten & API', on: true },
@@ -1089,6 +1134,7 @@ function start() {
   const h = (location.hash || '').replace('#', '');
   if (['topologie', 'gesamt', 'befunde', 'fluesse', 'ip'].includes(h)) showView(h);
   refresh();
+  startLive();
 }
 const fontsReady = (document.fonts && document.fonts.ready) ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve();
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => fontsReady.then(start)); else fontsReady.then(start);
