@@ -1,0 +1,19 @@
+# Abhängigkeiten
+node_modules/
+
+# Build-Ausgaben – enthalten die komplette Topologie aus data.js
+dist/
+dist-single/
+
+# Test-Screenshots – zeigen die Topologie
+tests/shots/
+
+# Lokales
+*.log
+*.tsbuildinfo
+.env
+.env.*
+.vite/
+
+# Galerie-Bilder (Vorher/Nachher)
+tests/gallery/

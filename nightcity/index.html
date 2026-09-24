@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Night City Homelab</title>
+<meta name="description" content="Die Homelab-Topologie als 2.5D-Cyberpunk-Stadt: Nodes als Corp-Türme, Datenströme auf echten Wegen, Agents als NPCs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&amp;family=Share+Tech+Mono&amp;family=Teko:wght@500;600&amp;display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305060d'/%3E%3Cpath d='M5 27V13h4v14zm6 0V6h5v21zm7 0V10h4v17zm6 0V16h3v11z' fill='%23fcee0a'/%3E%3C/svg%3E">
+</head>
+<body>
+<div id="app">
+  <div id="stage"></div>
+  <div id="overlay"></div>
+  <div id="scanframe" hidden></div>
+
+  <div id="hud-top">
+    <header id="brand" class="chip-panel">
+      <h1>NIGHT CITY<span> // HOMELAB</span></h1>
+      <div class="sub">Datenstand <b id="stamp">–</b> · <span id="counts">–</span></div>
+      <div id="clock">--:--:--<small>ORTSZEIT</small></div>
+    </header>
+    <nav id="toolbar" aria-label="Werkzeuge"></nav>
+    <button id="search-open" class="btn" type="button" title="Gebäude, Dienste, IPs, Agents suchen">Suchen <span class="k">/</span></button>
+  </div>
+
+  <aside id="log" class="chip-panel" aria-label="Protokoll der Agents" hidden>
+    <div class="head">
+      <h3>NETWATCH</h3>
+      <div class="filters" role="group" aria-label="Protokollfilter">
+        <button class="btn on" type="button" data-f="all">Alle</button>
+        <button class="btn" type="button" data-f="sel">Auswahl</button>
+        <button class="btn" type="button" data-f="warn">Warnungen</button>
+      </div>
+    </div>
+    <div class="entries" id="log-entries"></div>
+  </aside>
+
+  <aside id="dossier" class="chip-panel" aria-live="polite" hidden>
+    <div class="head">
+      <div class="top"><span class="eyebrow" id="d-eyebrow"></span><button class="close" type="button" id="d-close" aria-label="Schließen">×</button></div>
+      <h2 id="d-title"></h2>
+      <div class="meta" id="d-meta"></div>
+    </div>
+    <div class="body" id="d-body"></div>
+  </aside>
+
+  <div id="legend" class="chip-panel" aria-label="Legende"></div>
+  <div id="minimap" class="chip-panel"><canvas id="minimap-canvas" width="460" height="368" aria-label="Übersichtskarte"></canvas></div>
+
+  <footer id="ticker">
+    <div class="tag">LAGEFUNK</div>
+    <div class="track"><div class="run" id="ticker-run"></div></div>
+  </footer>
+
+  <div id="tip" class="chip-panel" hidden></div>
+
+  <div id="search" hidden>
+    <div class="box chip-panel">
+      <input id="search-input" type="text" autocomplete="off" spellcheck="false" placeholder="Name, IP, VMID, Dienst oder Agent …" aria-label="Suche">
+      <div class="res" id="search-res"></div>
+    </div>
+  </div>
+
+  <div id="help" hidden><div class="box chip-panel" id="help-box"></div></div>
+
+  <div id="caption" hidden><div class="t" id="cap-t"></div><div class="s" id="cap-s"></div></div>
+  <div id="photo-bar" class="chip-panel" hidden>
+    <button class="btn" type="button" id="photo-shot">Aufnahme</button>
+    <button class="btn" type="button" id="photo-labels">Beschriftung</button>
+    <button class="btn" type="button" id="photo-exit">Fotomodus beenden <span class="k">Esc</span></button>
+  </div>
+  <div id="shot" hidden>
+    <div class="box chip-panel">
+      <img id="shot-img" alt="Aufnahme der Stadt">
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <a class="btn" id="shot-dl" download="night-city-homelab.png" href="#">Als PNG speichern</a>
+        <button class="btn" type="button" id="shot-save" hidden>Als PNG speichern</button>
+        <span class="eyebrow" id="shot-hint">oder Rechtsklick → Bild speichern</span>
+        <button class="btn" type="button" id="shot-close">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="boot">
+    <div class="logo">NIGHT CITY<span>HOMELAB</span></div>
+    <div class="bar"><i id="boot-bar"></i></div>
+    <div class="steps" id="boot-step">Initialisiere …</div>
+  </div>
+</div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
