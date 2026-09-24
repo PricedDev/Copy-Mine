@@ -2,17 +2,22 @@
  * BEISPIEL-DATENSATZ – ein frei erfundenes, kleines Homelab.
  *
  * Das ist die EINZIGE Datei, die du normalerweise ersetzt. index.html lädt
- * sie als eigenständiges Skript vor app.js (siehe <script src="data.js">) –
- * Netzatlas bringt sonst keine eigenen Daten mit. Schema: docs/DATA_MODEL.md.
+ * sie per <script src="data.js"> vor ihrem eigenen, in derselben Datei
+ * eingebetteten Skript – Netzatlas bringt sonst keine eigenen Daten mit.
+ * Schema: docs/DATA_MODEL.md.
  *
- * WICHTIG: Ein paar IDs sind vom Seitencode (in der IIFE weiter unten in
- * index.html) fest erwartet, weil der Schaltplan sie direkt anspricht:
- *   inet, g-cloud, speedport, cluster, g-lan, g-remote,
- *   pve-node1, pve-ai, pve-print, pve-thin1..pve-thin4
- * Wenn du eigene Daten baust, behalte diese IDs bei (oder passe die
- * entsprechenden Stellen in index.html an – Suche nach den Strings oben).
- * Alle anderen IDs (Gäste, Software, Clients, Cloud-Dienste, IPs, MACs,
- * Namen, Befunde) sind frei erfunden und darfst du beliebig ersetzen.
+ * WICHTIG: Ein paar IDs sind vom Seitencode in index.html fest erwartet,
+ * weil der Schaltplan sie direkt anspricht:
+ *   inet, g-cloud, speedport, cluster, g-lan, g-remote
+ * sowie mindestens ein Knoten vom Typ 'pve' ohne parent (ein Proxmox-Node).
+ * Proxmox-Nodes sind seit Kurzem voll dynamisch: du kannst beliebig viele
+ * eintragen (auch nur einen), sie erscheinen automatisch als Spalten im
+ * Schaltplan, im Graph und in der Ausfall-Simulation – keine feste Anzahl
+ * mehr nötig. Wenn du eigene Daten baust, behalte die sechs Gruppen-/
+ * Router-/Cluster-IDs oben bei (oder passe die entsprechenden Stellen in
+ * index.html an). Alle anderen IDs (Gäste, Software, Clients, Cloud-Dienste,
+ * IPs, MACs, Namen, Befunde) sind frei erfunden und darfst du beliebig
+ * ersetzen.
  */
 
 const NODES = [

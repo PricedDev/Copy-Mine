@@ -371,7 +371,9 @@ const LAYERS = {
 const TYPES = { pve: 'Proxmox-Node', vm: 'VM', ct: 'LXC-Container', svc: 'Software / Dienst', cloud: 'Cloud-Dienst', domain: 'Domain / Endpunkt', router: 'Router', virtual: 'Cluster', client: 'Heimnetz-Gerät', remote: 'Tailnet / extern', group: 'Bereich' };
 const STATUS = { ok: 'läuft', warn: 'auffällig', crit: 'defekt', stopped: 'gestoppt / offline', unknown: 'unklar' };
 const SEV = { crit: 'Kritisch', warn: 'Warnung', info: 'Hinweis', good: 'Verbessert' };
-const VOTES = { 'pve-node1': 1, 'pve-ai': 1, 'pve-print': 1, 'pve-thin1': 1, 'pve-thin2': 0, 'pve-thin3': 0, 'pve-thin4': 0 };
+/* Jeder Proxmox-Node hat standardmäßig 1 Quorum-Stimme. Ausnahmen (z. B. ein QDevice ohne Stimme) hier eintragen: { 'knoten-id': 0 } */
+const VOTES = {};
+const votesOf = id => (id in VOTES ? VOTES[id] : 1);
 
 /* ===================== INDEX ===================== */
 const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
@@ -464,7 +466,7 @@ function nodeBlock(id, cols) {
   const guests = ks.filter(k => byId[k].t === 'vm' || byId[k].t === 'ct');
   const run = guests.filter(k => byId[k].st !== 'stopped');
   const stop = guests.filter(k => byId[k].st === 'stopped');
-  const v = VOTES[id];
+  const v = votesOf(id);
   return `<div class="node${stCls(n)}" ${attrs(id)} style="--cols:${cols}">
     <div class="own">
       <div class="nh"><h3>${esc(n.label)}</h3>${dotOf(n)}<span class="vote ${v ? '' : 'v0'}">${v ? '1 Stimme' : '0 Stimmen'}</span></div>
@@ -484,6 +486,9 @@ function ent(id, cls) {
 
 function renderPlan() {
   const cl = byId.cluster, sp = byId.speedport;
+  const pveTop = NODES.filter(n => n.t === 'pve' && !n.parent);
+  const clusterVotes = pveTop.reduce((s, n) => s + votesOf(n.id), 0);
+  const clusterQuorum = Math.floor(pveTop.length / 2) + 1;
   $('#plan').innerHTML = `
     <svg id="wires" aria-hidden="true"><defs>${Object.keys(LAYERS).concat(['crit', 'warn']).map(k => `<marker id="m-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:${k === 'crit' || k === 'warn' ? `var(--${k})` : ev(k)}"/></marker>`).join('')}</defs><g id="wg"></g></svg>
 
@@ -508,15 +513,9 @@ function renderPlan() {
       <div class="frame-h"><h2>Rechenzentrum · Rack</h2><span class="sub">physische Server im Heimnetz</span></div>
       <div class="frame cluster" ${attrs('cluster')}>
         <div class="own"><div class="frame-h"><h2>${esc(cl.label)}</h2><span class="sub">Proxmox VE · Corosync knet</span>
-          <div class="cfacts"><span>7 Nodes</span><span class="w">4 von 7 Stimmen · Quorum 3</span><span class="w">kein QDevice aktiv</span><span>kein HA</span><span class="c">kein Backup-Job</span><span>kein Shared Storage</span></div></div></div>
+          <div class="cfacts"><span>${pveTop.length} Node${pveTop.length === 1 ? '' : 's'}</span><span class="w">${clusterVotes} von ${pveTop.length} Stimmen · Quorum ${clusterQuorum}</span></div></div></div>
         <div class="nodes">
-          <div class="ncol">${nodeBlock('pve-node1', 2)}</div>
-          <div class="ncol">${nodeBlock('pve-ai', 2)}</div>
-          <div class="ncol">${nodeBlock('pve-print', 1)}
-            <div class="thinwrap"><div class="lbl">Thin-Client-Cluster · 4× Dell Wyse 5070</div>
-              ${['pve-thin1', 'pve-thin2', 'pve-thin3', 'pve-thin4'].map(t => nodeBlock(t, 1)).join('')}
-            </div>
-          </div>
+          ${pveTop.map(n => `<div class="ncol">${nodeBlock(n.id, 2)}</div>`).join('')}
         </div>
       </div>
     </section>
@@ -660,7 +659,7 @@ function detailHtml(id) {
   scope.forEach(x => down.delete(x));
   const fnd = FINDINGS.filter(f => f.n.includes(id));
   const crumbs = ancestors(id).reverse().map(a => `<a data-go="${a}">${esc(byId[a].label)}</a>`).join(' › ');
-  const votes = id in VOTES ? (VOTES[id] ? '1 Corosync-Stimme' : '0 Corosync-Stimmen') : null;
+  const votes = n.t === 'pve' ? (votesOf(id) ? '1 Corosync-Stimme' : '0 Corosync-Stimmen') : null;
   const kv = [['Typ', TYPES[n.t]], ['Status', `<span class="pill p-${n.st}">${STATUS[n.st]}</span>`], ['IP', n.ip && `<span class="mono">${esc(n.ip)}</span>`], ['VMID', n.vmid], ['MAC', n.mac && `<span class="mono">${esc(n.mac)}</span>`], ['Ressourcen', n.res && esc(n.res)], ['Quorum', votes], ['Ports', n.ports && esc(n.ports)], ['Tags', n.tags && esc(n.tags)], ['Quelle', n.seen && esc(n.seen)]].filter(r => r[1] !== undefined && r[1] !== null && r[1] !== '');
   const ch = kids[id] || [];
   return `
@@ -698,7 +697,13 @@ function simHtml() {
 }
 
 /* ===================== STEUERUNG ===================== */
-const SCEN = [['Node „Proxmox core" (inkl. Disk-Ausfall im Pool)', ['pve-node1']], ['AI-Node', ['pve-ai']], ['Print-Node', ['pve-print']], ['Mail-VM', ['g104']], ['Automatisierungs-Hub (VM)', ['g301']], ['CheckMK', ['g106']], ['Router/Firewall', ['speedport']], ['Internet', ['inet']]];
+/* Automatisch aus den Daten gebaut: ein Szenario je Proxmox-Node, plus Router und Internet, falls vorhanden.
+   Für weitere feste Szenarien (z. B. eine bestimmte VM) hier einfach Einträge ergänzen: ['Titel', ['knoten-id']] */
+const SCEN = [
+  ...NODES.filter(n => n.t === 'pve' && !n.parent).map(n => [n.label, [n.id]]),
+  ...(byId.speedport ? [['Router / Firewall', ['speedport']]] : []),
+  ...(byId.inet ? [['Internet', ['inet']]] : [])
+];
 function setSim(on, fails) {
   simMode = on;
   const b = $('#sim-toggle'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
@@ -826,19 +831,16 @@ function renderIP() {
 
 
 /* ===================== GESAMT-TOPOLOGIE (Graph) ===================== */
-const GEXTRA = { 'g-dc': { label: 'Rechenzentrum · Rack', t: 'frame' }, 'g-thin': { label: 'Thin-Client-Cluster · 4× Dell Wyse 5070', t: 'frame' } };
-const THINS = ['pve-thin1', 'pve-thin2', 'pve-thin3', 'pve-thin4'];
+const GEXTRA = { 'g-dc': { label: 'Rechenzentrum · Rack', t: 'frame' } };
 const gParent = id => {
   if (id === 'g-dc') return null;
   if (id === 'cluster') return 'g-dc';
-  if (id === 'g-thin') return 'cluster';
-  if (THINS.includes(id)) return 'g-thin';
   if (id.startsWith('pve-')) return 'cluster';
   return byId[id] ? byId[id].parent : null;
 };
 const gAnc = id => { const a = []; let p = gParent(id); while (p) { a.push(p); p = gParent(p); } return a; };
 const gKids = {};
-[...NODES.map(n => n.id), 'g-dc', 'g-thin'].forEach(id => { const p = gParent(id); if (p) (gKids[p] = gKids[p] || []).push(id); });
+[...NODES.map(n => n.id), 'g-dc'].forEach(id => { const p = gParent(id); if (p) (gKids[p] = gKids[p] || []).push(id); });
 const gT = id => GEXTRA[id] ? GEXTRA[id].t : byId[id].t;
 const GF = { svc: false, stopped: false, clients: true, cloud: true };
 const GL = { flow: true, ingress: true, proxy: true, alert: true, storage: true, vpn: true, cluster: false, mon: false, ssh: false, lan: true };
@@ -862,10 +864,14 @@ const GPAD = 12, GLBL = 24, GGX = 14, GGY = 18;
 function gLabel(id, comp) {
   if (GEXTRA[id]) return GEXTRA[id].label;
   const n = byId[id];
-  if (id === 'cluster') return 'MainCluster · Proxmox VE · 4 von 7 Stimmen · Quorum 3 · kein HA · kein Backup-Job';
+  if (id === 'cluster') {
+    const pveTop = NODES.filter(x => x.t === 'pve' && !x.parent);
+    const votes = pveTop.reduce((s, x) => s + votesOf(x.id), 0);
+    return `${n.label} · Proxmox VE · ${votes} von ${pveTop.length} Stimmen · Quorum ${Math.floor(pveTop.length / 2) + 1}`;
+  }
   if (n.t === 'pve') {
     const L = LIVE.node[id];
-    const v = VOTES[id] ? '1 Stimme' : '0 Stimmen';
+    const v = votesOf(id) ? '1 Stimme' : '0 Stimmen';
     const base = `${n.label} · ${n.ip.replace('192.168.2', '')} · ${v}` + (L ? ` · RAM ${fmt(L.mem)}/${fmt(L.memMax)} GB` : '');
     return comp ? base : base.replace(/ · /, '\n');
   }
@@ -880,8 +886,7 @@ function gLabel(id, comp) {
 function gPositions() {
   const M = {}, pos = {};
   const wrapOf = id => {
-    const W = { 'g-cloud': 1100, 'g-dc': 1e6, 'cluster': 1e6, 'g-thin': 420, 'g-lan': 900, 'g-remote': 560,
-      'pve-node1': GF.svc ? 1060 : 570, 'pve-ai': GF.svc ? 1060 : 570, 'pve-print': GF.svc ? 700 : 372, 'pve-thin1': 380, 'g301': 520 };
+    const W = { 'g-cloud': 1100, 'g-dc': 1e6, 'cluster': 1e6, 'g-lan': 900, 'g-remote': 560 };
     if (W[id]) return W[id];
     const t = gT(id);
     return (t === 'vm' || t === 'ct') ? 336 : 700;
@@ -921,7 +926,7 @@ function gPositions() {
 function gElements() {
   const pos = gPositions();
   const els = [];
-  const all = [...NODES.map(n => n.id), 'g-dc', 'g-thin'];
+  const all = [...NODES.map(n => n.id), 'g-dc'];
   all.forEach(id => {
     if (!gVisible(id)) return;
     const comp = gVisKids(id).length > 0;

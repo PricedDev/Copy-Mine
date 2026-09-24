@@ -28,11 +28,15 @@ als zu lange auf vollständige Daten zu warten. Erweitern ist jederzeit möglich
 
 Format und Feldbedeutung: [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md). Nimm `netzatlas/data.example.js` als
 Vorlage (gleiches Schema, ausführlich kommentiert). Ersetze den Inhalt von `netzatlas/data.js` durch das echte
-Inventar. Halte dabei diese IDs bei (der mitgelieferte Seitencode/Nightcity-Code erwartet sie – siehe
-Kommentar am Kopf von `data.example.js`), es sei denn du passt auch den jeweiligen Code mit an:
+Inventar. Halte dabei diese sechs IDs bei (der mitgelieferte Netzatlas-Seitencode erwartet sie fest – siehe
+Kommentar am Kopf von `data.example.js`), es sei denn du passt auch den Code mit an:
 
-`inet`, `g-cloud`, `speedport`, `cluster`, `g-lan`, `g-remote`, sowie mindestens einen Proxmox-Node mit der ID
-`pve-node1` (weitere Proxmox-Nodes sind in `nightcity/src/theme.ts` frei benennbar, siehe Schritt 3).
+`inet`, `g-cloud`, `speedport`, `cluster`, `g-lan`, `g-remote`.
+
+Proxmox-Nodes selbst sind in Netzatlas voll dynamisch: beliebig viele Knoten vom Typ `pve` eintragen (eigene
+IDs, eigene Anzahl) – sie erscheinen automatisch als Spalte im Schaltplan, im Graph und in der
+Ausfall-Simulation. In Night City brauchen sie zusätzlich einen Eintrag in `nightcity/src/theme.ts`
+(Schritt 4) – dort ist die Skyline von Hand gestaltet statt automatisch generiert.
 
 Prüf-Checkliste, bevor du weitermachst:
 - Jede in `EDGES` referenzierte Knoten-ID existiert auch in `NODES`.

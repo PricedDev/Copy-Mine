@@ -31,9 +31,11 @@ Pages, …) – keine Build-Pipeline nötig. Cytoscape.js für die Graph-Ansicht
 `data.example.js` ist dieselbe Datei mit ausführlichen Kommentaren als Referenz/Vorlage – wird von der Seite
 selbst nicht geladen.
 
-**Wichtig**: Ein paar IDs erwartet der Seitencode fest, weil der Schaltplan sie direkt anspricht (Router,
-Proxmox-Cluster, die Proxmox-Nodes selbst, die Gruppen für Cloud/Heimnetz/Tailnet). Die genaue Liste und wie du
-sie anpasst steht als Kommentar am Kopf von `data.example.js`. Alles andere (Gäste, Software, Clients,
-Cloud-Dienste, IPs, Befunde) ist frei.
+**Wichtig**: Sechs IDs erwartet der Seitencode fest, weil der Schaltplan sie direkt anspricht – Router,
+Proxmox-Cluster und die Gruppen für Cloud/Heimnetz/Tailnet (`inet`, `g-cloud`, `speedport`, `cluster`, `g-lan`,
+`g-remote`). Deine Proxmox-Nodes selbst sind dagegen voll dynamisch: trag beliebig viele Knoten vom Typ `pve`
+ein (auch nur einen) – sie erscheinen automatisch als eigene Spalte im Schaltplan, im Graph und in der
+Ausfall-Simulation, ganz ohne Codeänderung. Details dazu als Kommentar am Kopf von `data.example.js`. Alles
+andere (Gäste, Software, Clients, Cloud-Dienste, IPs, Befunde) ist ohnehin frei.
 
 [Night City](../nightcity) liest dieselbe `data.js` – aktualisierst du hier, baust du dort einfach neu.
